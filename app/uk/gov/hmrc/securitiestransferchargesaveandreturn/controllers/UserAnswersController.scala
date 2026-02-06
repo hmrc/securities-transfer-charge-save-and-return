@@ -56,10 +56,9 @@ class UserAnswersController @Inject()(
 
   def retrieveSubmissionIds(userId: String): Action[AnyContent] = Action.async { implicit request =>
     authorised() {
-      userAnswersRepository.getSubmissionIds(userId).map { userAnswers =>
-        Ok(Json.toJson(userAnswers))
+      userAnswersRepository.getSubmissionIds(userId).map { ids =>
+        Ok(Json.toJson(ids))
       }
     }
   }
-
 }

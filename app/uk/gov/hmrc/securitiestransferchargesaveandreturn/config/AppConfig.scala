@@ -26,5 +26,4 @@ class AppConfig @Inject()(config: Configuration) {
 
   lazy val timeToLive: Long = config.get[Int]("mongodb.timeToLive")
 
-
 }
