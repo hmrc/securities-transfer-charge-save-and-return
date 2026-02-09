@@ -14,21 +14,18 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.securitiestransferchargesaveandreturn
+package uk.gov.hmrc.securitiestransferchargesaveandreturn.models
 
-import com.google.inject.AbstractModule
-import uk.gov.hmrc.securitiestransferchargesaveandreturn.repositories.{UserAnswersRepository, UserAnswersRepositoryImpl}
+import play.api.libs.json.{JsObject, Json, OFormat}
 
-import java.time.{Clock, ZoneOffset}
+import java.time.Instant
 
-class Module extends AbstractModule {
+case class UserAnswers(userId: String,
+                       submissionId: SubmissionId,
+                       data: JsObject = Json.obj(),
+                       lastUpdated: Instant = Instant.now
+                      )
 
-
-  override def configure(): Unit = {
-
-    bind(classOf[UserAnswersRepository]).to(classOf[UserAnswersRepositoryImpl])
-    bind(classOf[Clock]).toInstance(Clock.systemDefaultZone.withZone(ZoneOffset.UTC))
-  }
-  
+object UserAnswers {
+  implicit val format: OFormat[UserAnswers] = Json.format[UserAnswers]
 }
-
