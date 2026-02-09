@@ -38,7 +38,7 @@ class UserAnswersControllerISpec
   extends AnyWordSpec
     with Matchers
     with OptionValues {
-  
+
   private val saveUrl: String = "/securities-transfer-charge-save-and-return/user-answers"
 
   private def retrieveUrl(userId: String, submissionId: SubmissionId): String =
@@ -139,7 +139,7 @@ class UserAnswersControllerISpec
 
     "GET /user-answers/:userId/:submissionId - return 404 not found when no existing user answers are found" in {
       val application = appWith(repo, authStub(allow = true))
-      
+
       val submissionId = SubmissionId("invalid")
 
       running(application) {
@@ -171,6 +171,27 @@ class UserAnswersControllerISpec
         val expectedResult = await(repo.getSubmissionIds(userId))
         contentAsJson(result) mustBe Json.toJson(expectedResult)
 
+      }
+
+      application.stop()
+    }
+
+    "GET /user-answers/:userId- return 200 status code with an empty list when no submissionIds are found" in {
+      val application = appWith(repo, authStub(allow = true))
+
+      val userId = "user4"
+
+      running(application) {
+        val request =
+          FakeRequest(GET, retrieveSubmissionIdsUrl(userId))
+
+
+        val result = route(application, request).value
+        status(result) mustBe OK
+
+        val expectedResult = await(repo.getSubmissionIds(userId))
+        expectedResult mustBe List.empty
+        contentAsJson(result) mustBe Json.toJson(expectedResult)
       }
 
       application.stop()
