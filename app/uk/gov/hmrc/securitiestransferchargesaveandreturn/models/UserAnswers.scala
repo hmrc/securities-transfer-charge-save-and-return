@@ -32,7 +32,7 @@ object UserAnswers {
     import play.api.libs.functional.syntax.*
 
     (
-      (__ \ "userId").read[String] and
+      (__ \ "_id").read[String] and
         (__ \ "submissionId").read[SubmissionId] and
         (__ \ "data").read[JsObject] and
         (__ \ "lastUpdated").read(MongoJavatimeFormats.instantFormat)
@@ -44,7 +44,7 @@ object UserAnswers {
     import play.api.libs.functional.syntax.*
 
     (
-      (__ \ "userId").write[String] and
+      (__ \ "_id").write[String] and
         (__ \ "submissionId").write[SubmissionId] and
         (__ \ "data").write[JsObject] and
         (__ \ "lastUpdated").write(MongoJavatimeFormats.instantFormat)

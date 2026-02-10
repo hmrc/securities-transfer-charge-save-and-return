@@ -72,8 +72,8 @@ class UserAnswersRepositoryImpl @Inject()(mongoComponent: MongoComponent,
 
   private def bySubmissionId(userId: String, submissionId: SubmissionId): Bson =
     Filters.and(
-      Filters.equal("user_id", userId),
-      Filters.equal("submission_id", submissionId.value)
+      Filters.equal("userId", userId),
+      Filters.equal("submissionId", submissionId.value)
     )
 
   override def getUserAnswers(userId: String,
