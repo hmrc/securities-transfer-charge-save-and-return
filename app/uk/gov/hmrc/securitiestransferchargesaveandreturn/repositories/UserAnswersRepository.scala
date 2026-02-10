@@ -22,14 +22,14 @@ import play.api.libs.json.{Json, OFormat}
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
 import uk.gov.hmrc.securitiestransferchargesaveandreturn.config.AppConfig
-import uk.gov.hmrc.securitiestransferchargesaveandreturn.models.{SubmissionId, UserAnswers}
+import uk.gov.hmrc.securitiestransferchargesaveandreturn.models.{SubmissionId, UserAnswers, UserAnswersMongo}
 
 import java.util.concurrent.TimeUnit
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
 case class UserAnswersDocument(
-                                userAnswers: Seq[UserAnswers]
+                                userAnswers: Seq[UserAnswersMongo]
                               )
 
 object UserAnswersDocument {
@@ -70,11 +70,22 @@ class UserAnswersRepositoryImpl @Inject()(
   override def getUserAnswers(
                                userId: String,
                                submissionId: SubmissionId
-                             ): Future[Option[UserAnswers]] =
+                             ): Future[Option[UserAnswers]] = {
     collection
       .find(byId(userId))
       .headOption()
-      .map(_.flatMap(doc => doc.userAnswers.find(_.submissionId == submissionId)))
+      .map(_.flatMap { doc =>
+        doc.userAnswers.find(_.submissionId == submissionId).map { uaMongo =>
+          UserAnswers(
+            userId = userId,
+            submissionId = uaMongo.submissionId,
+            data = uaMongo.data,
+            lastUpdated = uaMongo.lastUpdated
+          )
+        }
+      })
+  }
+
 
   override def getSubmissionIds(userId: String): Future[Seq[SubmissionId]] =
     collection
@@ -85,14 +96,21 @@ class UserAnswersRepositoryImpl @Inject()(
   override def saveUserAnswers(userAnswers: UserAnswers): Future[Unit] = {
     val filter = byId(userAnswers.userId)
 
+    val mongoUserAnswer = UserAnswersMongo(
+      submissionId = userAnswers.submissionId,
+      data = userAnswers.data,
+      lastUpdated = userAnswers.lastUpdated
+    )
+
     collection
       .find(filter)
       .headOption()
       .flatMap { maybeDoc =>
         val updatedAnswers = maybeDoc match {
           case Some(doc) =>
-            doc.userAnswers.filterNot(_.submissionId == userAnswers.submissionId) :+ userAnswers
-          case None => Seq(userAnswers)
+            doc.userAnswers.filterNot(_.submissionId == mongoUserAnswer.submissionId) :+ mongoUserAnswer
+          case None =>
+            Seq(mongoUserAnswer)
         }
 
         val updatedDoc = UserAnswersDocument(
