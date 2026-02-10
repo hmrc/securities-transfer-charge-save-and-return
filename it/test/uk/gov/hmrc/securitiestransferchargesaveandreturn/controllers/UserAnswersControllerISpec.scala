@@ -93,7 +93,7 @@ class UserAnswersControllerISpec
 
 
         val stored: Option[UserAnswers] = await(repo.getUserAnswers(userId, submissionId))
-        stored.value mustBe userAnswers
+        stored.value.copy(lastUpdated = userAnswers.lastUpdated) mustBe userAnswers
 
       }
 

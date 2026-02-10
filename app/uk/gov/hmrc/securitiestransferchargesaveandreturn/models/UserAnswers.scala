@@ -16,7 +16,8 @@
 
 package uk.gov.hmrc.securitiestransferchargesaveandreturn.models
 
-import play.api.libs.json.{JsObject, Json, OFormat}
+import play.api.libs.json.{JsObject, Json, OFormat, OWrites, Reads, __}
+import uk.gov.hmrc.mongo.play.json.formats.MongoJavatimeFormats
 
 import java.time.Instant
 
@@ -27,5 +28,29 @@ case class UserAnswers(userId: String,
                       )
 
 object UserAnswers {
-  implicit val format: OFormat[UserAnswers] = Json.format[UserAnswers]
+  val reads: Reads[UserAnswers] = {
+
+    import play.api.libs.functional.syntax.*
+
+    (
+      (__ \ "_id").read[String] and
+        (__ \ "submissionId").read[SubmissionId] and
+        (__ \ "data").read[JsObject] and
+        (__ \ "lastUpdated").read(MongoJavatimeFormats.instantFormat)
+      )(UserAnswers.apply _)
+  }
+
+  val writes: OWrites[UserAnswers] = {
+
+    import play.api.libs.functional.syntax.*
+
+    (
+      (__ \ "_id").write[String] and
+        (__ \ "submissionId").write[SubmissionId] and
+        (__ \ "data").write[JsObject] and
+        (__ \ "lastUpdated").write(MongoJavatimeFormats.instantFormat)
+      )(ua => (ua.userId, ua.submissionId, ua.data, ua.lastUpdated))
+  }
+
+  implicit val format: OFormat[UserAnswers] = OFormat(reads, writes)
 }

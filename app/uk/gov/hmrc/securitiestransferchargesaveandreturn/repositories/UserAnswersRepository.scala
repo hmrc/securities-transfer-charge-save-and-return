@@ -18,18 +18,23 @@ package uk.gov.hmrc.securitiestransferchargesaveandreturn.repositories
 
 import org.mongodb.scala.bson.conversions.Bson
 import org.mongodb.scala.model.*
-import play.api.libs.json.Format
+import play.api.libs.json.{Json, OFormat}
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
-import uk.gov.hmrc.mongo.play.json.formats.MongoJavatimeFormats
 import uk.gov.hmrc.securitiestransferchargesaveandreturn.config.AppConfig
 import uk.gov.hmrc.securitiestransferchargesaveandreturn.models.{SubmissionId, UserAnswers}
 
-import java.time.Instant
 import java.util.concurrent.TimeUnit
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
+case class UserAnswersDocument(
+                                userAnswers: Seq[UserAnswers]
+                              )
+
+object UserAnswersDocument {
+  implicit val format: OFormat[UserAnswersDocument] = Json.format[UserAnswersDocument]
+}
 
 trait UserAnswersRepository {
   def getUserAnswers(userId: String, submissionId: SubmissionId): Future[Option[UserAnswers]]
@@ -41,58 +46,63 @@ trait UserAnswersRepository {
 
 
 @Singleton
-class UserAnswersRepositoryImpl @Inject()(mongoComponent: MongoComponent,
-                                          appConfig: AppConfig
+class UserAnswersRepositoryImpl @Inject()(
+                                           mongoComponent: MongoComponent,
+                                           appConfig: AppConfig
                                          )(implicit ec: ExecutionContext)
-  extends PlayMongoRepository[UserAnswers](
+  extends PlayMongoRepository[UserAnswersDocument](
     collectionName = "userAnswers",
     mongoComponent = mongoComponent,
-    domainFormat = UserAnswers.format,
+    domainFormat = UserAnswersDocument.format,
     indexes = Seq(
       IndexModel(
         Indexes.ascending("lastUpdated"),
         IndexOptions()
           .name("lastUpdatedIdx")
-          .expireAfter(appConfig.timeToLive, TimeUnit.DAYS),
+          .expireAfter(appConfig.timeToLive, TimeUnit.DAYS)
       )
     )
   ) with UserAnswersRepository {
 
-  implicit val instantFormat: Format[Instant] = MongoJavatimeFormats.instantFormat
 
-
-  private def byId(id: String): Bson = Filters.equal("userId", id)
-
+  private def byId(id: String): Bson = Filters.equal("_id", id)
 
   override def getUserAnswers(
                                userId: String,
                                submissionId: SubmissionId
                              ): Future[Option[UserAnswers]] =
     collection
-      .find(
-        Filters.and(
-          byId(userId),
-          Filters.eq("submissionId", submissionId.value)
-        )
-      )
+      .find(byId(userId))
       .headOption()
+      .map(_.flatMap(doc => doc.userAnswers.find(_.submissionId == submissionId)))
 
   override def getSubmissionIds(userId: String): Future[Seq[SubmissionId]] =
-    collection.find(byId(userId)).map(_.submissionId).toFuture()
+    collection
+      .find(byId(userId))
+      .headOption()
+      .map(_.map(_.userAnswers.map(_.submissionId)).getOrElse(Seq.empty))
 
   override def saveUserAnswers(userAnswers: UserAnswers): Future[Unit] = {
+    val filter = byId(userAnswers.userId)
+
     collection
-      .replaceOne(
-        filter =
-          Filters.and(
-            Filters.equal("userId", userAnswers.userId),
-            Filters.equal("submissionId", userAnswers.submissionId.value)
-          )
-        ,
-        replacement = userAnswers,
-        options = ReplaceOptions().upsert(true)
-      )
-      .toFuture()
-      .map(_ => ())
+      .find(filter)
+      .headOption()
+      .flatMap { maybeDoc =>
+        val updatedAnswers = maybeDoc match {
+          case Some(doc) =>
+            doc.userAnswers.filterNot(_.submissionId == userAnswers.submissionId) :+ userAnswers
+          case None => Seq(userAnswers)
+        }
+
+        val updatedDoc = UserAnswersDocument(
+          userAnswers = updatedAnswers
+        )
+
+        collection
+          .replaceOne(filter, updatedDoc, ReplaceOptions().upsert(true))
+          .toFuture()
+          .map(_ => ())
+      }
   }
 }
