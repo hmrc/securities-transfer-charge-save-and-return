@@ -45,21 +45,21 @@ class SubmissionIdRepositoryImpl @Inject()(
 
   override def nextId(): Future[SubmissionId] = {
 
-    val update = Updates.inc("current", 1) // increases the current field by one when called
+    val update = Updates.inc("current", 1)
 
     collection
-      .findOneAndUpdate(                  // findOneAndUpdate guarantees atomicity, ive included a test which checks this (last test in ISpec)
-        Filters.equal("_id", counterId),  // target this document { _id: "submissionIdCOunter"}
-        update,                           // increment counter by 1
+      .findOneAndUpdate(
+        Filters.equal("_id", counterId),
+        update,
         FindOneAndUpdateOptions()
-          .upsert(true)                   // if document doesnt exist, create it
-          .returnDocument(ReturnDocument.AFTER)   // return the document after incrementing it
+          .upsert(true)
+          .returnDocument(ReturnDocument.AFTER)
       )
       .toFuture()
       .map { counter =>
 
         val wrappedValue =
-          if (counter.current > maxValue) 0L      // wrap check
+          if (counter.current > maxValue) 0L
           else counter.current
         
         if (counter.current > maxValue) {
