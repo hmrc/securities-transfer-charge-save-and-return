@@ -53,7 +53,6 @@ class UserAnswersControllerISpec
   val userId = "user-123"
   val submissionId: SubmissionId = SubmissionId("sub-001")
 
-
   private def authStub(allow: Boolean, ex: AuthorisationException = MissingBearerToken()): AuthConnector =
     new AuthConnector {
 
@@ -137,7 +136,7 @@ class UserAnswersControllerISpec
       application.stop()
     }
 
-    "GET /user-answers/:userId/:submissionId - return 404 not found when no existing user answers are found" in {
+    "GET /user-answers/:userId/:submissionId - return 200 and an empty list when no existing user answers are found" in {
       val application = appWith(repo, authStub(allow = true))
 
       val submissionId = SubmissionId("invalid")
@@ -147,8 +146,7 @@ class UserAnswersControllerISpec
           FakeRequest(GET, retrieveUrl(userId, submissionId))
 
         val result = route(application, request).value
-        status(result) mustBe NOT_FOUND
-
+        status(result) mustBe OK
       }
 
       application.stop()
