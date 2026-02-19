@@ -1,0 +1,67 @@
+/*
+ * Copyright 2026 HM Revenue & Customs
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package uk.gov.hmrc.securitiestransferchargesaveandreturn.controllers
+
+import org.scalatest.OptionValues
+import org.scalatest.matchers.must.Matchers
+import org.scalatest.wordspec.AnyWordSpec
+import play.api.inject
+import play.api.inject.guice.GuiceApplicationBuilder
+import play.api.test.FakeRequest
+import play.api.test.Helpers.*
+import uk.gov.hmrc.auth.core.AuthConnector
+import uk.gov.hmrc.securitiestransferchargesaveandreturn.models.SubmissionId
+import uk.gov.hmrc.securitiestransferchargesaveandreturn.support.AuthStub
+
+import scala.concurrent.Future
+
+class SubmissionIdControllerISpec extends AnyWordSpec with Matchers with OptionValues with AuthStub {
+
+  private val url =
+    "/securities-transfer-charge-save-and-return/submission-id"
+
+  private val appBuilder = new GuiceApplicationBuilder()
+
+  private def appWith(auth: AuthConnector) =
+    appBuilder
+      .overrides(inject.bind[AuthConnector].toInstance(auth))
+      .build()
+
+  "SubmissionIdController" should {
+
+    "POST /submission-id - return 200 and a submission ID when authorised" in {
+
+      val application = appWith(authStub(allow = true))
+
+      running(application) {
+
+        val request = FakeRequest(POST, url)
+
+        val result = route(application, request).value
+
+        status(result) mustBe OK
+
+        val id = contentAsJson(result).as[SubmissionId]
+
+        id.value must startWith("STC-")
+        id.value.length mustBe 13
+      }
+
+      application.stop()
+    }
+  }
+}

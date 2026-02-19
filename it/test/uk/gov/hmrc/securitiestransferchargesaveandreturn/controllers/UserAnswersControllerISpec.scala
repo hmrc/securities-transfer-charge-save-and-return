@@ -25,19 +25,17 @@ import play.api.libs.json.*
 import play.api.test.FakeRequest
 import play.api.test.Helpers.*
 import uk.gov.hmrc.auth.core.*
-import uk.gov.hmrc.auth.core.authorise.Predicate
-import uk.gov.hmrc.auth.core.retrieve.Retrieval
-import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.securitiestransferchargesaveandreturn.models.{SubmissionId, UserAnswers}
 import uk.gov.hmrc.securitiestransferchargesaveandreturn.repositories.UserAnswersRepository
+import uk.gov.hmrc.securitiestransferchargesaveandreturn.support.AuthStub
 
-import scala.concurrent.{ExecutionContext, Future}
-
+import scala.concurrent.Future
 
 class UserAnswersControllerISpec
   extends AnyWordSpec
     with Matchers
-    with OptionValues {
+    with OptionValues
+    with AuthStub {
 
   private val saveUrl: String = "/securities-transfer-charge-save-and-return/user-answers"
 
@@ -52,14 +50,6 @@ class UserAnswersControllerISpec
 
   val userId = "user-123"
   val submissionId: SubmissionId = SubmissionId("sub-001")
-
-  private def authStub(allow: Boolean, ex: AuthorisationException = MissingBearerToken()): AuthConnector =
-    new AuthConnector {
-
-      override def authorise[A](predicate: Predicate, retrieval: Retrieval[A])(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[A] =
-        if (allow) Future.successful(().asInstanceOf[A]) else Future.failed(ex)
-
-    }
 
   val repo: UserAnswersRepository = appBuilder.injector().instanceOf[UserAnswersRepository]
 

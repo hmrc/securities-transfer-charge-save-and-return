@@ -4,3 +4,4 @@
 GET         /user-answers/:userId/:submissionId          uk.gov.hmrc.securitiestransferchargesaveandreturn.controllers.UserAnswersController.retrieve(userId:String,submissionId:uk.gov.hmrc.securitiestransferchargesaveandreturn.models.SubmissionId)
 GET         /user-answers/:userId                        uk.gov.hmrc.securitiestransferchargesaveandreturn.controllers.UserAnswersController.retrieveSubmissionIds(userId:String)
 POST        /user-answers                                uk.gov.hmrc.securitiestransferchargesaveandreturn.controllers.UserAnswersController.save()
+POST        /submission-id                               uk.gov.hmrc.securitiestransferchargesaveandreturn.controllers.SubmissionIdController.nextSubmissionId()

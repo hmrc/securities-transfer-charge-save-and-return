@@ -17,7 +17,7 @@
 package uk.gov.hmrc.securitiestransferchargesaveandreturn
 
 import com.google.inject.AbstractModule
-import uk.gov.hmrc.securitiestransferchargesaveandreturn.repositories.{UserAnswersRepository, UserAnswersRepositoryImpl}
+import uk.gov.hmrc.securitiestransferchargesaveandreturn.repositories.{SubmissionIdRepository, SubmissionIdRepositoryImpl, UserAnswersRepository, UserAnswersRepositoryImpl}
 
 import java.time.{Clock, ZoneOffset}
 
@@ -28,6 +28,7 @@ class Module extends AbstractModule {
 
     bind(classOf[UserAnswersRepository]).to(classOf[UserAnswersRepositoryImpl])
     bind(classOf[Clock]).toInstance(Clock.systemDefaultZone.withZone(ZoneOffset.UTC))
+    bind(classOf[SubmissionIdRepository]).to(classOf[SubmissionIdRepositoryImpl])
   }
   
 }
