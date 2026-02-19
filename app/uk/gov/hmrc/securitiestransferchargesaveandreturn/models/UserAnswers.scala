@@ -27,6 +27,8 @@ case class UserAnswers(userId: String,
                        lastUpdated: Instant = Instant.now)
 
 object UserAnswers {
+  val empty: String => SubmissionId => UserAnswers = userId => submissionId => UserAnswers(userId, submissionId)
+  
   val reads: Reads[UserAnswers] = {
 
     import play.api.libs.functional.syntax.*

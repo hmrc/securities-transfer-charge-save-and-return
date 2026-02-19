@@ -47,10 +47,13 @@ class UserAnswersController @Inject()(
 
   def retrieve(userId: String, submissionId: SubmissionId): Action[AnyContent] = Action.async { implicit request =>
     authorised() {
-      userAnswersRepository.getUserAnswers(userId, submissionId).map {
-        case Some(userAnswers) => Ok(Json.toJson(userAnswers))
-        case None => NotFound
-      }
+      userAnswersRepository
+        .getUserAnswers(userId, submissionId)
+        .map {
+          case Some(userAnswers) => userAnswers
+          case None              => UserAnswers.empty(userId)(submissionId)
+        }
+        .map(answers => Ok(Json.toJson(answers)))
     }
   }
 
