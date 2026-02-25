@@ -16,18 +16,43 @@
 
 package uk.gov.hmrc.securitiestransferchargesaveandreturn.models
 
-import play.api.libs.json.{JsObject, Json, OFormat, OWrites, Reads, __}
+import play.api.libs.json.{Format, JsObject, JsResult, JsValue, Json, OFormat, OWrites, Reads, __}
+import play.api.mvc.Call
 import uk.gov.hmrc.mongo.play.json.formats.MongoJavatimeFormats
 
 import java.time.Instant
 
 case class UserAnswers(userId: String,
                        submissionId: SubmissionId,
+                       nextPage: Option[Call] = None,
                        data: JsObject = Json.obj(),
                        lastUpdated: Instant = Instant.now)
 
 object UserAnswers {
   val empty: String => SubmissionId => UserAnswers = userId => submissionId => UserAnswers(userId, submissionId)
+
+  implicit val callFormat: Format[Call] = new Format[Call] {
+
+    /* The Call constructor defaults its fragment attribute to null
+     * which causes the default serDes to fail. We get around this here
+     * by using an Option.
+     */
+
+    override def writes(call: Call): JsValue = {
+      Json.obj(
+        "method" -> call.method,
+        "url" -> call.url,
+        "fragment" -> Option(call.fragment)
+      )
+    }
+
+    override def reads(json: JsValue): JsResult[Call] = for {
+      method <- (json \ "method").validate[String]
+      url <- (json \ "url").validate[String]
+      fragment <- (json \ "fragment").validateOpt[String]
+    } yield Call(method, url, fragment.orNull)
+
+  }
   
   val reads: Reads[UserAnswers] = {
 
@@ -36,6 +61,7 @@ object UserAnswers {
     (
       (__ \ "_id").read[String] and
         (__ \ "submissionId").read[SubmissionId] and
+        (__ \ "nextPage").readNullable[Call] and
         (__ \ "data").read[JsObject] and
         (__ \ "lastUpdated").read(MongoJavatimeFormats.instantFormat)
       )(UserAnswers.apply _)
@@ -48,9 +74,10 @@ object UserAnswers {
     (
       (__ \ "_id").write[String] and
         (__ \ "submissionId").write[SubmissionId] and
+        (__ \ "nextPage").writeNullable[Call] and
         (__ \ "data").write[JsObject] and
         (__ \ "lastUpdated").write(MongoJavatimeFormats.instantFormat)
-      )(ua => (ua.userId, ua.submissionId, ua.data, ua.lastUpdated))
+      )(ua => (ua.userId, ua.submissionId, ua.nextPage, ua.data, ua.lastUpdated))
   }
 
   implicit val format: OFormat[UserAnswers] = OFormat(reads, writes)
