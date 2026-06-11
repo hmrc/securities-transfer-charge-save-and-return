@@ -23,13 +23,14 @@ import uk.gov.hmrc.mongo.play.json.formats.MongoJavatimeFormats
 import java.time.Instant
 
 case class UserAnswers(userId: UserId,
+                       groupIdentifier: GroupIdentifier,
                        submissionId: SubmissionId,
                        nextPage: Option[Call] = None,
                        data: JsObject = Json.obj(),
                        lastUpdated: Instant = Instant.now)
 
 object UserAnswers {
-  val empty: UserId => SubmissionId => UserAnswers = userId => submissionId => UserAnswers(userId, submissionId)
+  val empty: UserId => GroupIdentifier => SubmissionId => UserAnswers = userId => groupIdentifier => submissionId => UserAnswers(userId, groupIdentifier, submissionId)
 
   implicit val callFormat: Format[Call] = new Format[Call] {
 
@@ -60,6 +61,7 @@ object UserAnswers {
 
     (
       (__ \ "_id").read[UserId] and
+        (__ \ "groupIdentifier").read[GroupIdentifier] and
         (__ \ "submissionId").read[SubmissionId] and
         (__ \ "nextPage").readNullable[Call] and
         (__ \ "data").read[JsObject] and
@@ -73,11 +75,12 @@ object UserAnswers {
 
     (
       (__ \ "_id").write[UserId] and
+        (__ \ "groupIdentifier").write[GroupIdentifier] and
         (__ \ "submissionId").write[SubmissionId] and
         (__ \ "nextPage").writeNullable[Call] and
         (__ \ "data").write[JsObject] and
         (__ \ "lastUpdated").write(MongoJavatimeFormats.instantFormat)
-      )(ua => (ua.userId, ua.submissionId, ua.nextPage, ua.data, ua.lastUpdated))
+      )(ua => (ua.userId, ua.groupIdentifier, ua.submissionId, ua.nextPage, ua.data, ua.lastUpdated))
   }
 
   implicit val format: OFormat[UserAnswers] = OFormat(reads, writes)

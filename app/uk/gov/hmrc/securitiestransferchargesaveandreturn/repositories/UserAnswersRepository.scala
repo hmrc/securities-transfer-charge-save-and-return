@@ -22,7 +22,7 @@ import play.api.libs.json.{Json, OFormat}
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
 import uk.gov.hmrc.securitiestransferchargesaveandreturn.config.AppConfig
-import uk.gov.hmrc.securitiestransferchargesaveandreturn.models.{SubmissionId, UserAnswers, UserId}
+import uk.gov.hmrc.securitiestransferchargesaveandreturn.models.{GroupIdentifier, SubmissionId, UserAnswers, UserId}
 
 import java.util.concurrent.TimeUnit
 import javax.inject.{Inject, Singleton}
@@ -37,7 +37,7 @@ object UserAnswersDocument {
   implicit val format: OFormat[UserAnswersDocument] = Json.format[UserAnswersDocument]
   def apply(userAnswers: UserAnswers): UserAnswersDocument = {
     UserAnswersDocument(
-      s"${userAnswers.userId}:${userAnswers.submissionId}",
+      userAnswers.submissionId.value,
       userAnswers.userId,
       userAnswers.submissionId,
       userAnswers
@@ -46,9 +46,11 @@ object UserAnswersDocument {
 }
 
 trait UserAnswersRepository:
-  def getUserAnswers(userId: UserId, submissionId: SubmissionId): Future[Option[UserAnswers]]
+  def getUserAnswers(submissionId: SubmissionId): Future[Option[UserAnswers]]
   def saveUserAnswers(userAnswers: UserAnswers): Future[Unit]
-  def getSubmissionIds(userId: UserId): Future[Seq[SubmissionId]]
+  def getSubmissionIdsByUser(userId: UserId): Future[Seq[SubmissionId]]
+  def getSubmissionIdsByGroup(groupId: GroupIdentifier): Future[Seq[SubmissionId]]
+
 
 @Singleton
 class UserAnswersRepositoryImpl @Inject()(mongoComponent: MongoComponent,
@@ -69,30 +71,31 @@ class UserAnswersRepositoryImpl @Inject()(mongoComponent: MongoComponent,
   ) with UserAnswersRepository {
 
   private def byUserId(userId: UserId): Bson = Filters.equal("userId", userId)
+  private def byGroupId(groupId: GroupIdentifier): Bson = Filters.equal("groupIdentifier", groupId)
+  private def bySubmissionId(submissionId: SubmissionId): Bson = Filters.equal("submissionId", submissionId.value)
 
-  private def bySubmissionId(userId: UserId, submissionId: SubmissionId): Bson =
-    Filters.and(
-      Filters.equal("userId", userId),
-      Filters.equal("submissionId", submissionId.value)
-    )
-
-  override def getUserAnswers(userId: UserId,
-                              submissionId: SubmissionId): Future[Option[UserAnswers]] =
+  override def getUserAnswers( submissionId: SubmissionId): Future[Option[UserAnswers]] =
     collection
-      .find(bySubmissionId(userId, submissionId))
+      .find(bySubmissionId(submissionId))
       .map(_.userAnswers)
       .headOption()
 
-  override def getSubmissionIds(userId: UserId): Future[Seq[SubmissionId]] =
+  override def getSubmissionIdsByUser(userId: UserId): Future[Seq[SubmissionId]] =
     collection
       .find(byUserId(userId))
+      .map(_.submissionId)
+      .toFuture()
+      
+  override def getSubmissionIdsByGroup(groupId: GroupIdentifier): Future[Seq[SubmissionId]] =
+    collection
+      .find(byGroupId(groupId))
       .map(_.submissionId)
       .toFuture()
 
   override def saveUserAnswers(userAnswers: UserAnswers): Future[Unit] = {
     collection
       .replaceOne(
-        filter      = bySubmissionId(userAnswers.userId, userAnswers.submissionId),
+        filter      = bySubmissionId(userAnswers.submissionId),
         replacement = UserAnswersDocument(userAnswers),
         options     = ReplaceOptions().upsert(true)
       )

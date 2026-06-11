@@ -18,16 +18,17 @@ package uk.gov.hmrc.securitiestransferchargesaveandreturn.models
 
 import play.api.libs.json.{Reads, Writes}
 
-opaque type UserId = String
+opaque type GroupIdentifier = String
 
-object UserId:
-  def apply(v: String): UserId = v
+object GroupIdentifier:
+  def apply(v: String): GroupIdentifier = v
 
-  extension (id: UserId)
+  extension (id: GroupIdentifier)
     def value: String = id
 
-  given submissionIdReads: Reads[UserId] =
-    Reads.StringReads.map(UserId.apply)
+  given submissionIdReads: Reads[GroupIdentifier] =
+    Reads.StringReads.map(GroupIdentifier.apply)
 
-  given submissionIdWrites: Writes[UserId] =
-    Writes.StringWrites.contramap[UserId](_.value)
+  given submissionIdWrites: Writes[GroupIdentifier] =
+    Writes.StringWrites.contramap[GroupIdentifier](_.value)
+
