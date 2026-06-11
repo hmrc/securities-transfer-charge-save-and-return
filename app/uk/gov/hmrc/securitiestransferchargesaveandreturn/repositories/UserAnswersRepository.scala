@@ -22,14 +22,14 @@ import play.api.libs.json.{Json, OFormat}
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
 import uk.gov.hmrc.securitiestransferchargesaveandreturn.config.AppConfig
-import uk.gov.hmrc.securitiestransferchargesaveandreturn.models.{SubmissionId, UserAnswers}
+import uk.gov.hmrc.securitiestransferchargesaveandreturn.models.{SubmissionId, UserAnswers, UserId}
 
 import java.util.concurrent.TimeUnit
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
 case class UserAnswersDocument( id: String,
-                                userId: String,
+                                userId: UserId,
                                 submissionId: SubmissionId,
                                 userAnswers: UserAnswers)
 
@@ -46,9 +46,9 @@ object UserAnswersDocument {
 }
 
 trait UserAnswersRepository:
-  def getUserAnswers(userId: String, submissionId: SubmissionId): Future[Option[UserAnswers]]
+  def getUserAnswers(userId: UserId, submissionId: SubmissionId): Future[Option[UserAnswers]]
   def saveUserAnswers(userAnswers: UserAnswers): Future[Unit]
-  def getSubmissionIds(userId: String): Future[Seq[SubmissionId]]
+  def getSubmissionIds(userId: UserId): Future[Seq[SubmissionId]]
 
 @Singleton
 class UserAnswersRepositoryImpl @Inject()(mongoComponent: MongoComponent,
@@ -68,22 +68,22 @@ class UserAnswersRepositoryImpl @Inject()(mongoComponent: MongoComponent,
     )
   ) with UserAnswersRepository {
 
-  private def byUserId(userId: String): Bson = Filters.equal("userId", userId)
+  private def byUserId(userId: UserId): Bson = Filters.equal("userId", userId)
 
-  private def bySubmissionId(userId: String, submissionId: SubmissionId): Bson =
+  private def bySubmissionId(userId: UserId, submissionId: SubmissionId): Bson =
     Filters.and(
       Filters.equal("userId", userId),
       Filters.equal("submissionId", submissionId.value)
     )
 
-  override def getUserAnswers(userId: String,
+  override def getUserAnswers(userId: UserId,
                               submissionId: SubmissionId): Future[Option[UserAnswers]] =
     collection
       .find(bySubmissionId(userId, submissionId))
       .map(_.userAnswers)
       .headOption()
 
-  override def getSubmissionIds(userId: String): Future[Seq[SubmissionId]] =
+  override def getSubmissionIds(userId: UserId): Future[Seq[SubmissionId]] =
     collection
       .find(byUserId(userId))
       .map(_.submissionId)

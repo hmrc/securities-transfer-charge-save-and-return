@@ -25,7 +25,7 @@ import play.api.libs.json.*
 import play.api.test.FakeRequest
 import play.api.test.Helpers.*
 import uk.gov.hmrc.auth.core.*
-import uk.gov.hmrc.securitiestransferchargesaveandreturn.models.{SubmissionId, UserAnswers}
+import uk.gov.hmrc.securitiestransferchargesaveandreturn.models.{SubmissionId, UserAnswers, UserId}
 import uk.gov.hmrc.securitiestransferchargesaveandreturn.repositories.UserAnswersRepository
 import uk.gov.hmrc.securitiestransferchargesaveandreturn.support.AuthStub
 
@@ -48,7 +48,7 @@ class UserAnswersControllerISpec
   private val appBuilder: GuiceApplicationBuilder =
     new GuiceApplicationBuilder()
 
-  val userId = "user-123"
+  val userId: UserId = UserId("user-123")
   val submissionId: SubmissionId = SubmissionId("sub-001")
 
   val repo: UserAnswersRepository = appBuilder.injector().instanceOf[UserAnswersRepository]
@@ -113,7 +113,7 @@ class UserAnswersControllerISpec
 
       running(application) {
         val request =
-          FakeRequest(GET, retrieveUrl(userId, submissionId))
+          FakeRequest(GET, retrieveUrl(userId.value, submissionId))
 
 
         await(repo.saveUserAnswers(userAnswers))
@@ -133,7 +133,7 @@ class UserAnswersControllerISpec
 
       running(application) {
         val request =
-          FakeRequest(GET, retrieveUrl(userId, submissionId))
+          FakeRequest(GET, retrieveUrl(userId.value, submissionId))
 
         val result = route(application, request).value
         status(result) mustBe OK
@@ -147,7 +147,7 @@ class UserAnswersControllerISpec
 
       running(application) {
         val request =
-          FakeRequest(GET, retrieveSubmissionIdsUrl(userId))
+          FakeRequest(GET, retrieveSubmissionIdsUrl(userId.value))
 
 
         await(repo.saveUserAnswers(userAnswers))
@@ -167,11 +167,12 @@ class UserAnswersControllerISpec
     "GET /user-answers/:userId- return 200 status code with an empty list when no submissionIds are found" in {
       val application = appWith(repo, authStub(allow = true))
 
-      val userId = "user4"
+      val uid = "user4"
+      val userId = UserId(uid)
 
       running(application) {
         val request =
-          FakeRequest(GET, retrieveSubmissionIdsUrl(userId))
+          FakeRequest(GET, retrieveSubmissionIdsUrl(uid))
 
 
         val result = route(application, request).value

@@ -20,7 +20,7 @@ import play.api.libs.json.{JsError, JsValue, Json}
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions}
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
-import uk.gov.hmrc.securitiestransferchargesaveandreturn.models.{SubmissionId, UserAnswers}
+import uk.gov.hmrc.securitiestransferchargesaveandreturn.models.{SubmissionId, UserAnswers, UserId}
 import uk.gov.hmrc.securitiestransferchargesaveandreturn.repositories.UserAnswersRepository
 
 import javax.inject.{Inject, Singleton}
@@ -45,8 +45,9 @@ class UserAnswersController @Inject()(
       }
   }
 
-  def retrieve(userId: String, submissionId: SubmissionId): Action[AnyContent] = Action.async { implicit request =>
+  def retrieve(uid: String, submissionId: SubmissionId): Action[AnyContent] = Action.async { implicit request =>
     authorised() {
+      val userId = UserId(uid)
       userAnswersRepository
         .getUserAnswers(userId, submissionId)
         .map {
@@ -57,8 +58,9 @@ class UserAnswersController @Inject()(
     }
   }
 
-  def retrieveSubmissionIds(userId: String): Action[AnyContent] = Action.async { implicit request =>
+  def retrieveSubmissionIds(uid: String): Action[AnyContent] = Action.async { implicit request =>
     authorised() {
+      val userId = UserId(uid)
       userAnswersRepository.getSubmissionIds(userId).map { ids =>
         Ok(Json.toJson(ids))
       }
