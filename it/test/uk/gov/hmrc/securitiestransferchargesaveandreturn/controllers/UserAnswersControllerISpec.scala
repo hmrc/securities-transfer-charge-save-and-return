@@ -22,10 +22,11 @@ import org.scalatest.wordspec.AnyWordSpec
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.*
-import play.api.test.FakeRequest
+import play.api.mvc.*
+import play.api.test.*
 import play.api.test.Helpers.*
 import uk.gov.hmrc.auth.core.*
-import uk.gov.hmrc.securitiestransferchargesaveandreturn.models.{SubmissionId, UserAnswers, UserId}
+import uk.gov.hmrc.securitiestransferchargesaveandreturn.models.{GroupIdentifier, SubmissionId, UserAnswers, UserId}
 import uk.gov.hmrc.securitiestransferchargesaveandreturn.repositories.UserAnswersRepository
 import uk.gov.hmrc.securitiestransferchargesaveandreturn.support.AuthStub
 
@@ -39,16 +40,17 @@ class UserAnswersControllerISpec
 
   private val saveUrl: String = "/securities-transfer-charge-save-and-return/user-answers"
 
-  private def retrieveUrl(userId: String, submissionId: SubmissionId): String =
-    s"/securities-transfer-charge-save-and-return/user-answers/$userId/$submissionId"
+  private def retrieveUrl(submissionId: SubmissionId): String =
+    s"/securities-transfer-charge-save-and-return/user-answers/$submissionId"
 
   private def retrieveSubmissionIdsUrl(userId: String): String =
-    s"/securities-transfer-charge-save-and-return/user-answers/$userId"
+    s"/securities-transfer-charge-save-and-return/user-answers/search/by-user?userId=$userId"
 
   private val appBuilder: GuiceApplicationBuilder =
     new GuiceApplicationBuilder()
 
   val userId: UserId = UserId("user-123")
+  val groupIdentifier: GroupIdentifier = GroupIdentifier("group-123")
   val submissionId: SubmissionId = SubmissionId("sub-001")
 
   val repo: UserAnswersRepository = appBuilder.injector().instanceOf[UserAnswersRepository]
@@ -61,7 +63,7 @@ class UserAnswersControllerISpec
       )
       .build()
 
-  private val userAnswers: UserAnswers = UserAnswers(userId, submissionId)
+  private val userAnswers: UserAnswers = UserAnswers(userId, groupIdentifier, submissionId)
 
   private val sampleJson: JsValue = Json.toJson(userAnswers)
 
@@ -81,7 +83,7 @@ class UserAnswersControllerISpec
         status(result) mustBe NO_CONTENT
 
 
-        val stored: Option[UserAnswers] = await(repo.getUserAnswers(userId, submissionId))
+        val stored: Option[UserAnswers] = await(repo.getUserAnswers(submissionId))
         stored.value.copy(lastUpdated = userAnswers.lastUpdated) mustBe userAnswers
 
       }
@@ -108,12 +110,12 @@ class UserAnswersControllerISpec
       application.stop()
     }
 
-    "GET /user-answers/:userId/:submissionId - return 200 when the userAnswers exists" in {
+    "GET /user-answers/:submissionId - return 200 when the userAnswers exists" in {
       val application = appWith(repo, authStub(allow = true))
 
       running(application) {
         val request =
-          FakeRequest(GET, retrieveUrl(userId.value, submissionId))
+          FakeRequest(GET, retrieveUrl(submissionId))
 
 
         await(repo.saveUserAnswers(userAnswers))
@@ -126,23 +128,23 @@ class UserAnswersControllerISpec
       application.stop()
     }
 
-    "GET /user-answers/:userId/:submissionId - return 200 and an empty list when no existing user answers are found" in {
+    "GET /user-answers/:submissionId - return 404 when no existing user answers are found" in {
       val application = appWith(repo, authStub(allow = true))
 
       val submissionId = SubmissionId("invalid")
 
       running(application) {
         val request =
-          FakeRequest(GET, retrieveUrl(userId.value, submissionId))
+          FakeRequest(GET, retrieveUrl(submissionId))
 
         val result = route(application, request).value
-        status(result) mustBe OK
+        status(result) mustBe NOT_FOUND
       }
 
       application.stop()
     }
 
-    "GET /user-answers/:userId- return a list of submissionIds" in {
+    "GET /user-answers/search/by-user - return a list of submissionIds" in {
       val application = appWith(repo, authStub(allow = true))
 
       running(application) {
@@ -156,7 +158,7 @@ class UserAnswersControllerISpec
         val result = route(application, request).value
         status(result) mustBe OK
 
-        val expectedResult = await(repo.getSubmissionIds(userId))
+        val expectedResult = await(repo.getSubmissionIdsByUser(userId))
         contentAsJson(result) mustBe Json.toJson(expectedResult)
 
       }
@@ -178,7 +180,7 @@ class UserAnswersControllerISpec
         val result = route(application, request).value
         status(result) mustBe OK
 
-        val expectedResult = await(repo.getSubmissionIds(userId))
+        val expectedResult = await(repo.getSubmissionIdsByUser(userId))
         expectedResult mustBe List.empty
         contentAsJson(result) mustBe Json.toJson(expectedResult)
       }
