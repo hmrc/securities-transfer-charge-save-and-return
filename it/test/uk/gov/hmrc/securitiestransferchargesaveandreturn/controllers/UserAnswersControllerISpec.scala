@@ -43,8 +43,11 @@ class UserAnswersControllerISpec
   private def retrieveUrl(submissionId: SubmissionId): String =
     s"/securities-transfer-charge-save-and-return/user-answers/$submissionId"
 
-  private def retrieveSubmissionIdsUrl(userId: String): String =
+  private def retrieveSubmissionIdsByUserUrl(userId: String): String =
     s"/securities-transfer-charge-save-and-return/user-answers/search/by-user?userId=$userId"
+
+  private def retrieveSubmissionIdsByGroupUrl(groupId: String): String =
+    s"/securities-transfer-charge-save-and-return/user-answers/search/by-group?groupId=$groupId"
 
   private val appBuilder: GuiceApplicationBuilder =
     new GuiceApplicationBuilder()
@@ -149,7 +152,7 @@ class UserAnswersControllerISpec
 
       running(application) {
         val request =
-          FakeRequest(GET, retrieveSubmissionIdsUrl(userId.value))
+          FakeRequest(GET, retrieveSubmissionIdsByUserUrl(userId.value))
 
 
         await(repo.saveUserAnswers(userAnswers))
@@ -166,7 +169,7 @@ class UserAnswersControllerISpec
       application.stop()
     }
 
-    "GET /user-answers/:userId- return 200 status code with an empty list when no submissionIds are found" in {
+    "GET /user-answers/search/by-user - return 200 status code with an empty list when no submissionIds are found" in {
       val application = appWith(repo, authStub(allow = true))
 
       val uid = "user4"
@@ -174,13 +177,57 @@ class UserAnswersControllerISpec
 
       running(application) {
         val request =
-          FakeRequest(GET, retrieveSubmissionIdsUrl(uid))
+          FakeRequest(GET, retrieveSubmissionIdsByUserUrl(uid))
 
 
         val result = route(application, request).value
         status(result) mustBe OK
 
         val expectedResult = await(repo.getSubmissionIdsByUser(userId))
+        expectedResult mustBe List.empty
+        contentAsJson(result) mustBe Json.toJson(expectedResult)
+      }
+
+      application.stop()
+    }
+
+    "GET /user-answers/search/by-group - return a list of submissionIds" in {
+      val application = appWith(repo, authStub(allow = true))
+
+      running(application) {
+        val request =
+          FakeRequest(GET, retrieveSubmissionIdsByGroupUrl(groupIdentifier.value))
+
+
+        await(repo.saveUserAnswers(userAnswers))
+        await(repo.saveUserAnswers(userAnswers.copy(submissionId = SubmissionId("sub-002"))))
+
+        val result = route(application, request).value
+        status(result) mustBe OK
+
+        val expectedResult = await(repo.getSubmissionIdsByGroup(groupIdentifier))
+        contentAsJson(result) mustBe Json.toJson(expectedResult)
+
+      }
+
+      application.stop()
+    }
+
+    "GET /user-answers/search/by-group - return 200 status code with an empty list when no submissionIds are found" in {
+      val application = appWith(repo, authStub(allow = true))
+
+      val gid = "user-that-does-not-exist"
+      val groupIdentifier = GroupIdentifier(gid)
+
+      running(application) {
+        val request =
+          FakeRequest(GET, retrieveSubmissionIdsByGroupUrl(gid))
+
+
+        val result = route(application, request).value
+        status(result) mustBe OK
+
+        val expectedResult = await(repo.getSubmissionIdsByGroup(groupIdentifier))
         expectedResult mustBe List.empty
         contentAsJson(result) mustBe Json.toJson(expectedResult)
       }
