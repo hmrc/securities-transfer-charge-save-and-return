@@ -30,6 +30,7 @@ import scala.concurrent.{ExecutionContext, Future}
 
 case class UserAnswersDocument( id: String,
                                 userId: UserId,
+                                groupIdentifier: GroupIdentifier,
                                 submissionId: SubmissionId,
                                 userAnswers: UserAnswers)
 
@@ -39,6 +40,7 @@ object UserAnswersDocument {
     UserAnswersDocument(
       userAnswers.submissionId.value,
       userAnswers.userId,
+      userAnswers.groupIdentifier,
       userAnswers.submissionId,
       userAnswers
     )
@@ -85,7 +87,7 @@ class UserAnswersRepositoryImpl @Inject()(mongoComponent: MongoComponent,
       .find(byUserId(userId))
       .map(_.submissionId)
       .toFuture()
-      
+
   override def getSubmissionIdsByGroup(groupId: GroupIdentifier): Future[Seq[SubmissionId]] =
     collection
       .find(byGroupId(groupId))
