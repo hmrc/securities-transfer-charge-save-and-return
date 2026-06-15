@@ -20,7 +20,7 @@ import play.api.libs.json.{JsError, JsValue, Json}
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions}
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
-import uk.gov.hmrc.securitiestransferchargesaveandreturn.models.{SubmissionId, UserAnswers}
+import uk.gov.hmrc.securitiestransferchargesaveandreturn.models.{GroupIdentifier, SubmissionId, UserAnswers, UserId}
 import uk.gov.hmrc.securitiestransferchargesaveandreturn.repositories.UserAnswersRepository
 
 import javax.inject.{Inject, Singleton}
@@ -38,28 +38,36 @@ class UserAnswersController @Inject()(
     implicit request =>
       authorised() {
         request.body.validate[UserAnswers].fold(
-          errors => Future.successful(BadRequest(JsError.toJson(errors))),
-          userAnswers =>
-            userAnswersRepository.saveUserAnswers(userAnswers).map(_ => NoContent)
+          errors      => Future.successful(BadRequest(JsError.toJson(errors))),
+          userAnswers => userAnswersRepository.saveUserAnswers(userAnswers).map(_ => NoContent)
         )
       }
   }
 
-  def retrieve(userId: String, submissionId: SubmissionId): Action[AnyContent] = Action.async { implicit request =>
+  def retrieve(submissionId: SubmissionId): Action[AnyContent] = Action.async { implicit request =>
     authorised() {
       userAnswersRepository
-        .getUserAnswers(userId, submissionId)
+        .getUserAnswers(submissionId)
         .map {
-          case Some(userAnswers) => userAnswers
-          case None              => UserAnswers.empty(userId)(submissionId)
+          case Some(userAnswers) => Ok(Json.toJson(userAnswers))
+          case _                 => NotFound
         }
-        .map(answers => Ok(Json.toJson(answers)))
     }
   }
 
-  def retrieveSubmissionIds(userId: String): Action[AnyContent] = Action.async { implicit request =>
+  def retrieveSubmissionIdsByUser(uid: String): Action[AnyContent] = Action.async { implicit request =>
     authorised() {
-      userAnswersRepository.getSubmissionIds(userId).map { ids =>
+      val userId = UserId(uid)
+      userAnswersRepository.getSubmissionIdsByUser(userId).map { ids =>
+        Ok(Json.toJson(ids))
+      }
+    }
+  }
+  
+  def retrieveSubmissionIdsByGroup(gid: String): Action[AnyContent] = Action.async { implicit request =>
+    authorised() {
+      val groupId = GroupIdentifier(gid)
+      userAnswersRepository.getSubmissionIdsByGroup(groupId).map { ids =>
         Ok(Json.toJson(ids))
       }
     }
