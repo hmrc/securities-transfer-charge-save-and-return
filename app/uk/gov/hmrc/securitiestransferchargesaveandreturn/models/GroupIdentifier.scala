@@ -26,9 +26,9 @@ object GroupIdentifier:
   extension (id: GroupIdentifier)
     def value: String = id
 
-  given submissionIdReads: Reads[GroupIdentifier] =
+  given groupIdentifierReads: Reads[GroupIdentifier] =
     Reads.StringReads.map(GroupIdentifier.apply)
 
-  given submissionIdWrites: Writes[GroupIdentifier] =
+  given groupIdentifierWrites: Writes[GroupIdentifier] =
     Writes.StringWrites.contramap[GroupIdentifier](_.value)
 

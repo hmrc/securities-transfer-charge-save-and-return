@@ -76,7 +76,7 @@ class UserAnswersRepositoryImpl @Inject()(mongoComponent: MongoComponent,
   private def byGroupId(groupId: GroupIdentifier): Bson = Filters.equal("groupIdentifier", groupId)
   private def bySubmissionId(submissionId: SubmissionId): Bson = Filters.equal("submissionId", submissionId.value)
 
-  override def getUserAnswers( submissionId: SubmissionId): Future[Option[UserAnswers]] =
+  override def getUserAnswers(submissionId: SubmissionId): Future[Option[UserAnswers]] =
     collection
       .find(bySubmissionId(submissionId))
       .map(_.userAnswers)

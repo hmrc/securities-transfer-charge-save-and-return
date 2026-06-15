@@ -26,8 +26,8 @@ object UserId:
   extension (id: UserId)
     def value: String = id
 
-  given submissionIdReads: Reads[UserId] =
+  given userIdReads: Reads[UserId] =
     Reads.StringReads.map(UserId.apply)
 
-  given submissionIdWrites: Writes[UserId] =
+  given userIdWrites: Writes[UserId] =
     Writes.StringWrites.contramap[UserId](_.value)
