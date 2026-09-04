@@ -39,6 +39,7 @@ class UserAnswersControllerISpec
     with AuthStub {
 
   private val saveUrl: String = "/securities-transfer-charge-save-and-return/user-answers"
+  private val deleteUrl: String => String = id => s"/securities-transfer-charge-save-and-return/user-answers/$id"
 
   private def retrieveUrl(submissionId: SubmissionId): String =
     s"/securities-transfer-charge-save-and-return/user-answers/$submissionId"
@@ -230,6 +231,52 @@ class UserAnswersControllerISpec
         val expectedResult = await(repo.getSubmissionIdsByGroup(groupIdentifier))
         expectedResult mustBe List.empty
         contentAsJson(result) mustBe Json.toJson(expectedResult)
+      }
+
+      application.stop()
+    }
+
+    "DELETE /user-answers/:submissionId - return 204 NoContent even if the submissionId is not present" in {
+      val application = appWith(repo, authStub(allow = true))
+
+      running(application) {
+        val request =
+          FakeRequest(DELETE, deleteUrl("nonsense"))
+            .withHeaders("Content-Type" -> "application/json")
+            .withBody(sampleJson)
+
+        val result = route(application, request).value
+        status(result) mustBe NO_CONTENT
+      }
+
+      application.stop()
+    }
+
+    "DELETE /user-answers/:submissionId - return 204 NoContent and remove the matching record from the db" in {
+      val application = appWith(repo, authStub(allow = true))
+
+      running(application) {
+        // Add an item to the repo
+        val request =
+          FakeRequest(POST, saveUrl)
+            .withHeaders("Content-Type" -> "application/json")
+            .withBody(sampleJson)
+
+        val result = route(application, request).value
+        status(result) mustBe NO_CONTENT
+        val stored: Option[UserAnswers] = await(repo.getUserAnswers(submissionId))
+        stored.value.copy(lastUpdated = userAnswers.lastUpdated) mustBe userAnswers
+
+        // Now delete it
+        val deletReq =
+          FakeRequest(DELETE, deleteUrl(submissionId.value))
+            .withHeaders("Content-Type" -> "application/json")
+            .withBody(sampleJson)
+
+        val deleteResult = route(application, deletReq).value
+        status(deleteResult) mustBe NO_CONTENT
+        val storedAfterDelete: Option[UserAnswers] = await(repo.getUserAnswers(submissionId))
+        storedAfterDelete mustBe None
       }
 
       application.stop()
