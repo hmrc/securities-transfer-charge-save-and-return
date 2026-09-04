@@ -52,7 +52,7 @@ trait UserAnswersRepository:
   def saveUserAnswers(userAnswers: UserAnswers): Future[Unit]
   def getSubmissionIdsByUser(userId: UserId): Future[Seq[SubmissionId]]
   def getSubmissionIdsByGroup(groupId: GroupIdentifier): Future[Seq[SubmissionId]]
-
+  def deleteUserAnswers(submissionId: SubmissionId): Future[Unit]
 
 @Singleton
 class UserAnswersRepositoryImpl @Inject()(mongoComponent: MongoComponent,
@@ -105,4 +105,9 @@ class UserAnswersRepositoryImpl @Inject()(mongoComponent: MongoComponent,
       .map(_ => ())
   }
 
+  override def deleteUserAnswers(submissionId: SubmissionId): Future[Unit] =
+    collection
+      .deleteOne(bySubmissionId(submissionId))
+      .toFuture()
+      .map(_ => ())
 }

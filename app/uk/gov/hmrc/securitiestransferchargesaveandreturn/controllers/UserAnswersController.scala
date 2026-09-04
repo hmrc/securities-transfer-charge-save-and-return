@@ -72,4 +72,11 @@ class UserAnswersController @Inject()(
       }
     }
   }
+
+  def delete(submissionId: SubmissionId): Action[AnyContent] = Action.async { implicit request =>
+    authorised() {
+      userAnswersRepository.deleteUserAnswers(submissionId)
+      .map(_ => NoContent)
+    }
+  }
 }
