@@ -25,12 +25,13 @@ import java.time.Instant
 case class UserAnswers(userId: UserId,
                        groupIdentifier: GroupIdentifier,
                        submissionId: SubmissionId,
+                       journeyType: JourneyType,
                        nextPage: Option[Call] = None,
                        data: JsObject = Json.obj(),
                        lastUpdated: Instant = Instant.now)
 
 object UserAnswers {
-  val empty: UserId => GroupIdentifier => SubmissionId => UserAnswers = userId => groupIdentifier => submissionId => UserAnswers(userId, groupIdentifier, submissionId)
+  val empty: UserId => GroupIdentifier => SubmissionId =>JourneyType=> UserAnswers = userId => groupIdentifier => submissionId => journeyType => UserAnswers(userId, groupIdentifier, submissionId,journeyType)
 
   implicit val callFormat: Format[Call] = new Format[Call] {
 
@@ -63,6 +64,7 @@ object UserAnswers {
       (__ \ "_id").read[UserId] and
         (__ \ "groupIdentifier").read[GroupIdentifier] and
         (__ \ "submissionId").read[SubmissionId] and
+        (__ \ "journeyType").read[JourneyType] and
         (__ \ "nextPage").readNullable[Call] and
         (__ \ "data").read[JsObject] and
         (__ \ "lastUpdated").read(MongoJavatimeFormats.instantFormat)
@@ -77,10 +79,11 @@ object UserAnswers {
       (__ \ "_id").write[UserId] and
         (__ \ "groupIdentifier").write[GroupIdentifier] and
         (__ \ "submissionId").write[SubmissionId] and
+        (__ \ "journeyType").write[JourneyType] and
         (__ \ "nextPage").writeNullable[Call] and
         (__ \ "data").write[JsObject] and
         (__ \ "lastUpdated").write(MongoJavatimeFormats.instantFormat)
-      )(ua => (ua.userId, ua.groupIdentifier, ua.submissionId, ua.nextPage, ua.data, ua.lastUpdated))
+      )(ua => (ua.userId, ua.groupIdentifier, ua.submissionId, ua.journeyType,ua.nextPage, ua.data, ua.lastUpdated))
   }
 
   implicit val format: OFormat[UserAnswers] = OFormat(reads, writes)
