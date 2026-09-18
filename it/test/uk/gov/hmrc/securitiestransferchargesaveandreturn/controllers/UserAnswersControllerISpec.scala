@@ -26,7 +26,7 @@ import play.api.mvc.*
 import play.api.test.*
 import play.api.test.Helpers.*
 import uk.gov.hmrc.auth.core.*
-import uk.gov.hmrc.securitiestransferchargesaveandreturn.models.{GroupIdentifier, SubmissionId, UserAnswers, UserId}
+import uk.gov.hmrc.securitiestransferchargesaveandreturn.models.{GroupIdentifier, JourneyType, SubmissionId, UserAnswers, UserId}
 import uk.gov.hmrc.securitiestransferchargesaveandreturn.repositories.UserAnswersRepository
 import uk.gov.hmrc.securitiestransferchargesaveandreturn.support.AuthStub
 
@@ -56,6 +56,7 @@ class UserAnswersControllerISpec
   val userId: UserId = UserId("user-123")
   val groupIdentifier: GroupIdentifier = GroupIdentifier("group-123")
   val submissionId: SubmissionId = SubmissionId("sub-001")
+  val journeyTpe: JourneyType = JourneyType("stf")
 
   val repo: UserAnswersRepository = appBuilder.injector().instanceOf[UserAnswersRepository]
 
@@ -67,7 +68,7 @@ class UserAnswersControllerISpec
       )
       .build()
 
-  private val userAnswers: UserAnswers = UserAnswers(userId, groupIdentifier, submissionId)
+  private val userAnswers: UserAnswers = UserAnswers(userId, groupIdentifier, submissionId,journeyTpe)
 
   private val sampleJson: JsValue = Json.toJson(userAnswers)
 
