@@ -22,7 +22,7 @@ import play.api.libs.json.{Json, OFormat}
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
 import uk.gov.hmrc.securitiestransferchargesaveandreturn.config.AppConfig
-import uk.gov.hmrc.securitiestransferchargesaveandreturn.models.{GroupIdentifier, SubmissionId, UserAnswers, UserId}
+import uk.gov.hmrc.securitiestransferchargesaveandreturn.models.{GroupIdentifier, SubmissionId, UserAnswers, UserAnswersSummary, UserId}
 
 import java.util.concurrent.TimeUnit
 import javax.inject.{Inject, Singleton}
@@ -50,8 +50,8 @@ object UserAnswersDocument {
 trait UserAnswersRepository:
   def getUserAnswers(submissionId: SubmissionId): Future[Option[UserAnswers]]
   def saveUserAnswers(userAnswers: UserAnswers): Future[Unit]
-  def getSubmissionIdsByUser(userId: UserId): Future[Seq[SubmissionId]]
-  def getSubmissionIdsByGroup(groupId: GroupIdentifier): Future[Seq[SubmissionId]]
+  def getSubmissionIdsByUser(userId: UserId): Future[Seq[UserAnswersSummary]]
+  def getSubmissionIdsByGroup(groupId: GroupIdentifier): Future[Seq[UserAnswersSummary]]
   def deleteUserAnswers(submissionId: SubmissionId): Future[Unit]
 
 @Singleton
@@ -76,22 +76,29 @@ class UserAnswersRepositoryImpl @Inject()(mongoComponent: MongoComponent,
   private def byGroupId(groupId: GroupIdentifier): Bson = Filters.equal("groupIdentifier", groupId)
   private def bySubmissionId(submissionId: SubmissionId): Bson = Filters.equal("submissionId", submissionId.value)
 
+  private val toSummary: UserAnswersDocument => UserAnswersSummary = doc =>
+    UserAnswersSummary(
+      submissionId = doc.submissionId,
+      journeyType  = doc.userAnswers.journeyType,
+      lastUpdated  = doc.userAnswers.lastUpdated
+    )
+
   override def getUserAnswers(submissionId: SubmissionId): Future[Option[UserAnswers]] =
     collection
       .find(bySubmissionId(submissionId))
       .map(_.userAnswers)
       .headOption()
 
-  override def getSubmissionIdsByUser(userId: UserId): Future[Seq[SubmissionId]] =
+  override def getSubmissionIdsByUser(userId: UserId): Future[Seq[UserAnswersSummary]] =
     collection
       .find(byUserId(userId))
-      .map(_.submissionId)
+      .map(toSummary)
       .toFuture()
 
-  override def getSubmissionIdsByGroup(groupId: GroupIdentifier): Future[Seq[SubmissionId]] =
+  override def getSubmissionIdsByGroup(groupId: GroupIdentifier): Future[Seq[UserAnswersSummary]] =
     collection
       .find(byGroupId(groupId))
-      .map(_.submissionId)
+      .map(toSummary)
       .toFuture()
 
   override def saveUserAnswers(userAnswers: UserAnswers): Future[Unit] = {
