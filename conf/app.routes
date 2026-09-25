@@ -3,8 +3,8 @@
 
 POST        /user-answers                       uk.gov.hmrc.securitiestransferchargesaveandreturn.controllers.UserAnswersController.save()
 GET         /user-answers/:submissionId         uk.gov.hmrc.securitiestransferchargesaveandreturn.controllers.UserAnswersController.retrieve(submissionId:uk.gov.hmrc.securitiestransferchargesaveandreturn.models.SubmissionId)
-GET         /user-answers/search/by-user        uk.gov.hmrc.securitiestransferchargesaveandreturn.controllers.UserAnswersController.retrieveSubmissionIdsByUser(userId:String)
-GET         /user-answers/search/by-group       uk.gov.hmrc.securitiestransferchargesaveandreturn.controllers.UserAnswersController.retrieveSubmissionIdsByGroup(groupId:String)
+GET         /user-answers/search/by-user        uk.gov.hmrc.securitiestransferchargesaveandreturn.controllers.UserAnswersController.retrieveSummariesByUser(userId:String)
+GET         /user-answers/search/by-group       uk.gov.hmrc.securitiestransferchargesaveandreturn.controllers.UserAnswersController.retrieveSummariesByGroup(groupId:String)
 DELETE      /user-answers/:submissionId         uk.gov.hmrc.securitiestransferchargesaveandreturn.controllers.UserAnswersController.delete(submissionId:uk.gov.hmrc.securitiestransferchargesaveandreturn.models.SubmissionId)
 
 POST        /submission-id                      uk.gov.hmrc.securitiestransferchargesaveandreturn.controllers.SubmissionIdController.nextSubmissionId()

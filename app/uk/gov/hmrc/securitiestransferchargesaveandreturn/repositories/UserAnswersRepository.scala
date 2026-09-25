@@ -50,8 +50,8 @@ object UserAnswersDocument {
 trait UserAnswersRepository:
   def getUserAnswers(submissionId: SubmissionId): Future[Option[UserAnswers]]
   def saveUserAnswers(userAnswers: UserAnswers): Future[Unit]
-  def getSubmissionIdsByUser(userId: UserId): Future[Seq[UserAnswersSummary]]
-  def getSubmissionIdsByGroup(groupId: GroupIdentifier): Future[Seq[UserAnswersSummary]]
+  def getSummariesByUser(userId: UserId): Future[Seq[UserAnswersSummary]]
+  def getSummariesByGroup(groupId: GroupIdentifier): Future[Seq[UserAnswersSummary]]
   def deleteUserAnswers(submissionId: SubmissionId): Future[Unit]
 
 @Singleton
@@ -89,13 +89,13 @@ class UserAnswersRepositoryImpl @Inject()(mongoComponent: MongoComponent,
       .map(_.userAnswers)
       .headOption()
 
-  override def getSubmissionIdsByUser(userId: UserId): Future[Seq[UserAnswersSummary]] =
+  override def getSummariesByUser(userId: UserId): Future[Seq[UserAnswersSummary]] =
     collection
       .find(byUserId(userId))
       .map(toSummary)
       .toFuture()
 
-  override def getSubmissionIdsByGroup(groupId: GroupIdentifier): Future[Seq[UserAnswersSummary]] =
+  override def getSummariesByGroup(groupId: GroupIdentifier): Future[Seq[UserAnswersSummary]] =
     collection
       .find(byGroupId(groupId))
       .map(toSummary)
