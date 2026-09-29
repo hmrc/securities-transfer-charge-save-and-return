@@ -55,19 +55,19 @@ class UserAnswersController @Inject()(
     }
   }
 
-  def retrieveSubmissionIdsByUser(uid: String): Action[AnyContent] = Action.async { implicit request =>
+  def retrieveSummariesByUser(uid: String): Action[AnyContent] = Action.async { implicit request =>
     authorised() {
       val userId = UserId(uid)
-      userAnswersRepository.getSubmissionIdsByUser(userId).map { ids =>
+      userAnswersRepository.getSummariesByUser(userId).map { ids =>
         Ok(Json.toJson(ids))
       }
     }
   }
   
-  def retrieveSubmissionIdsByGroup(gid: String): Action[AnyContent] = Action.async { implicit request =>
+  def retrieveSummariesByGroup(gid: String): Action[AnyContent] = Action.async { implicit request =>
     authorised() {
       val groupId = GroupIdentifier(gid)
-      userAnswersRepository.getSubmissionIdsByGroup(groupId).map { ids =>
+      userAnswersRepository.getSummariesByGroup(groupId).map { ids =>
         Ok(Json.toJson(ids))
       }
     }

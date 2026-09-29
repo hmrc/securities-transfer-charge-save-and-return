@@ -163,7 +163,7 @@ class UserAnswersControllerISpec
         val result = route(application, request).value
         status(result) mustBe OK
 
-        val expectedResult = await(repo.getSubmissionIdsByUser(userId))
+        val expectedResult = await(repo.getSummariesByUser(userId))
         contentAsJson(result) mustBe Json.toJson(expectedResult)
 
       }
@@ -185,7 +185,7 @@ class UserAnswersControllerISpec
         val result = route(application, request).value
         status(result) mustBe OK
 
-        val expectedResult = await(repo.getSubmissionIdsByUser(userId))
+        val expectedResult = await(repo.getSummariesByUser(userId))
         expectedResult mustBe List.empty
         contentAsJson(result) mustBe Json.toJson(expectedResult)
       }
@@ -207,7 +207,7 @@ class UserAnswersControllerISpec
         val result = route(application, request).value
         status(result) mustBe OK
 
-        val expectedResult = await(repo.getSubmissionIdsByGroup(groupIdentifier))
+        val expectedResult = await(repo.getSummariesByGroup(groupIdentifier))
         contentAsJson(result) mustBe Json.toJson(expectedResult)
 
       }
@@ -229,7 +229,7 @@ class UserAnswersControllerISpec
         val result = route(application, request).value
         status(result) mustBe OK
 
-        val expectedResult = await(repo.getSubmissionIdsByGroup(groupIdentifier))
+        val expectedResult = await(repo.getSummariesByGroup(groupIdentifier))
         expectedResult mustBe List.empty
         contentAsJson(result) mustBe Json.toJson(expectedResult)
       }
