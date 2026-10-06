@@ -28,10 +28,11 @@ case class UserAnswers(userId: UserId,
                        journeyType: JourneyType,
                        nextPage: Option[Call] = None,
                        data: JsObject = Json.obj(),
+                       createdAt: Instant = Instant.now,
                        lastUpdated: Instant = Instant.now)
 
 object UserAnswers {
-  val empty: UserId => GroupIdentifier => SubmissionId =>JourneyType=> UserAnswers = userId => groupIdentifier => submissionId => journeyType => UserAnswers(userId, groupIdentifier, submissionId,journeyType)
+  val empty: UserId => GroupIdentifier => SubmissionId => JourneyType => UserAnswers = userId => groupIdentifier => submissionId => journeyType => UserAnswers(userId, groupIdentifier, submissionId, journeyType)
 
   implicit val callFormat: Format[Call] = new Format[Call] {
 
@@ -67,6 +68,7 @@ object UserAnswers {
         (__ \ "journeyType").read[JourneyType] and
         (__ \ "nextPage").readNullable[Call] and
         (__ \ "data").read[JsObject] and
+        (__ \ "createdAt").read(MongoJavatimeFormats.instantFormat) and
         (__ \ "lastUpdated").read(MongoJavatimeFormats.instantFormat)
       )(UserAnswers.apply _)
   }
@@ -82,8 +84,9 @@ object UserAnswers {
         (__ \ "journeyType").write[JourneyType] and
         (__ \ "nextPage").writeNullable[Call] and
         (__ \ "data").write[JsObject] and
+        (__ \ "createdAt").write(MongoJavatimeFormats.instantFormat) and
         (__ \ "lastUpdated").write(MongoJavatimeFormats.instantFormat)
-      )(ua => (ua.userId, ua.groupIdentifier, ua.submissionId, ua.journeyType,ua.nextPage, ua.data, ua.lastUpdated))
+      )(ua => (ua.userId, ua.groupIdentifier, ua.submissionId, ua.journeyType,ua.nextPage, ua.data, ua.createdAt, ua.lastUpdated))
   }
 
   implicit val format: OFormat[UserAnswers] = OFormat(reads, writes)
