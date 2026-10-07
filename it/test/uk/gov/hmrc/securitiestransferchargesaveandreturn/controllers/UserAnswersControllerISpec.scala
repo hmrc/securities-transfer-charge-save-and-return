@@ -68,7 +68,7 @@ class UserAnswersControllerISpec
       )
       .build()
 
-  private val userAnswers: UserAnswers = UserAnswers(userId, groupIdentifier, submissionId,journeyTpe)
+  private val userAnswers: UserAnswers = UserAnswers(userId, groupIdentifier, submissionId, journeyTpe)
 
   private val sampleJson: JsValue = Json.toJson(userAnswers)
 
@@ -89,7 +89,7 @@ class UserAnswersControllerISpec
 
 
         val stored: Option[UserAnswers] = await(repo.getUserAnswers(submissionId))
-        stored.value.copy(lastUpdated = userAnswers.lastUpdated) mustBe userAnswers
+        stored.value.copy(createdAt = userAnswers.createdAt, lastUpdated = userAnswers.lastUpdated) mustBe userAnswers
 
       }
 
@@ -266,7 +266,7 @@ class UserAnswersControllerISpec
         val result = route(application, request).value
         status(result) mustBe NO_CONTENT
         val stored: Option[UserAnswers] = await(repo.getUserAnswers(submissionId))
-        stored.value.copy(lastUpdated = userAnswers.lastUpdated) mustBe userAnswers
+        stored.value.copy(createdAt = userAnswers.createdAt, lastUpdated = userAnswers.lastUpdated) mustBe userAnswers
 
         // Now delete it
         val deletReq =
