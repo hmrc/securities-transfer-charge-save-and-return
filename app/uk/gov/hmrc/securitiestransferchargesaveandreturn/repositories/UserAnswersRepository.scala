@@ -64,9 +64,9 @@ class UserAnswersRepositoryImpl @Inject()(mongoComponent: MongoComponent,
     domainFormat = UserAnswersDocument.format,
     indexes = Seq(
       IndexModel(
-        Indexes.ascending("lastUpdated"),
+        Indexes.ascending("createdAt"),
         IndexOptions()
-          .name("lastUpdatedIdx")
+          .name("createdAtIdx")
           .expireAfter(appConfig.timeToLive, TimeUnit.DAYS)
       )
     )
@@ -85,10 +85,11 @@ class UserAnswersRepositoryImpl @Inject()(mongoComponent: MongoComponent,
 
   private val toSummary: UserAnswersDocument => UserAnswersSummary = doc =>
     UserAnswersSummary(
-      submissionId        = doc.submissionId,
+      submissionId = doc.submissionId,
       maybeAgentReference = getReference(doc),
-      journeyType         = doc.userAnswers.journeyType,
-      lastUpdated         = doc.userAnswers.lastUpdated
+      journeyType  = doc.userAnswers.journeyType,
+      createdAt = doc.userAnswers.createdAt,
+      lastUpdated  = doc.userAnswers.lastUpdated
     )
 
   override def getUserAnswers(submissionId: SubmissionId): Future[Option[UserAnswers]] =
