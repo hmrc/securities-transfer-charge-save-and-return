@@ -80,6 +80,7 @@ class UserAnswersRepositoryImpl @Inject()(mongoComponent: MongoComponent,
     UserAnswersSummary(
       submissionId = doc.submissionId,
       journeyType  = doc.userAnswers.journeyType,
+      createdAt = doc.userAnswers.createdAt,
       lastUpdated  = doc.userAnswers.lastUpdated
     )
 

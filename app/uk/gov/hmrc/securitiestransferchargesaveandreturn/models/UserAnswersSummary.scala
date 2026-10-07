@@ -23,6 +23,7 @@ import java.time.Instant
 final case class UserAnswersSummary(
   submissionId: SubmissionId,
   journeyType: JourneyType,
+  createdAt: Instant,
   lastUpdated: Instant
 )
 
