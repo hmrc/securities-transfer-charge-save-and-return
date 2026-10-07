@@ -18,7 +18,7 @@ package uk.gov.hmrc.securitiestransferchargesaveandreturn.repositories
 
 import org.mongodb.scala.bson.conversions.Bson
 import org.mongodb.scala.model.*
-import play.api.libs.json.{Json, OFormat}
+import play.api.libs.json.{JsString, Json, OFormat}
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
 import uk.gov.hmrc.securitiestransferchargesaveandreturn.config.AppConfig
@@ -76,11 +76,19 @@ class UserAnswersRepositoryImpl @Inject()(mongoComponent: MongoComponent,
   private def byGroupId(groupId: GroupIdentifier): Bson = Filters.equal("groupIdentifier", groupId)
   private def bySubmissionId(submissionId: SubmissionId): Bson = Filters.equal("submissionId", submissionId.value)
 
+  private def getReference(doc: UserAnswersDocument): Option[String] =
+    (doc.userAnswers.data \ "agentReference")
+      .toOption
+      .collect {
+        case s: JsString => s.toString
+      }
+
   private val toSummary: UserAnswersDocument => UserAnswersSummary = doc =>
     UserAnswersSummary(
-      submissionId = doc.submissionId,
-      journeyType  = doc.userAnswers.journeyType,
-      lastUpdated  = doc.userAnswers.lastUpdated
+      submissionId        = doc.submissionId,
+      maybeAgentReference = getReference(doc),
+      journeyType         = doc.userAnswers.journeyType,
+      lastUpdated         = doc.userAnswers.lastUpdated
     )
 
   override def getUserAnswers(submissionId: SubmissionId): Future[Option[UserAnswers]] =
