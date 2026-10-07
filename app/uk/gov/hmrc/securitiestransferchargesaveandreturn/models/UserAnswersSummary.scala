@@ -24,8 +24,8 @@ final case class UserAnswersSummary(
   submissionId        : SubmissionId,
   maybeAgentReference : Option[String],
   journeyType         : JourneyType,
-  createdAt: Instant,
-  lastUpdated: Instant
+  createdAt           : Instant,
+  lastUpdated         : Instant
 )
 
 object UserAnswersSummary:
