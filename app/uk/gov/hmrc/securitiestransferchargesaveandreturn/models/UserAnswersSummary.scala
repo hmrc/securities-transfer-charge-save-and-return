@@ -21,8 +21,9 @@ import play.api.libs.json.{Json, Reads, Writes}
 import java.time.Instant
 
 final case class UserAnswersSummary(
-  submissionId: SubmissionId,
-  journeyType: JourneyType,
+  submissionId        : SubmissionId,
+  maybeAgentReference : Option[String],
+  journeyType         : JourneyType,
   createdAt: Instant,
   lastUpdated: Instant
 )
@@ -30,4 +31,3 @@ final case class UserAnswersSummary(
 object UserAnswersSummary:
   given Reads[UserAnswersSummary] = Json.reads[UserAnswersSummary]
   given Writes[UserAnswersSummary] = Json.writes[UserAnswersSummary]
-  
