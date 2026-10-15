@@ -77,10 +77,10 @@ class UserAnswersRepositoryImpl @Inject()(mongoComponent: MongoComponent,
   private def bySubmissionId(submissionId: SubmissionId): Bson = Filters.equal("submissionId", submissionId.value)
 
   private def getReference(doc: UserAnswersDocument): Option[String] =
-    (doc.userAnswers.data \ "agentReference")
+    (doc.userAnswers.data \ "agentReference"\ "agentReference")
       .toOption
       .collect {
-        case s: JsString => s.toString
+        case s: JsString => s.value
       }
 
   private val toSummary: UserAnswersDocument => UserAnswersSummary = doc =>
