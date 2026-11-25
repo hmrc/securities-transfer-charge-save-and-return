@@ -18,12 +18,14 @@ package uk.gov.hmrc.securitiestransferchargesaveandreturn.repositories
 
 import org.mongodb.scala.bson.conversions.Bson
 import org.mongodb.scala.model.*
-import play.api.libs.json.{JsString, Json, OFormat}
+import play.api.libs.json.{Format, JsString, Json, OFormat}
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
+import uk.gov.hmrc.mongo.play.json.formats.MongoJavatimeFormats
 import uk.gov.hmrc.securitiestransferchargesaveandreturn.config.AppConfig
 import uk.gov.hmrc.securitiestransferchargesaveandreturn.models.{GroupIdentifier, SubmissionId, UserAnswers, UserAnswersSummary, UserId}
 
+import java.time.Instant
 import java.util.concurrent.TimeUnit
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
@@ -36,6 +38,8 @@ case class UserAnswersDocument( id: String,
 
 object UserAnswersDocument {
   implicit val format: OFormat[UserAnswersDocument] = Json.format[UserAnswersDocument]
+  implicit val instantFormat: Format[Instant] = MongoJavatimeFormats.instantFormat
+
   def apply(userAnswers: UserAnswers): UserAnswersDocument = {
     UserAnswersDocument(
       userAnswers.submissionId.value,
