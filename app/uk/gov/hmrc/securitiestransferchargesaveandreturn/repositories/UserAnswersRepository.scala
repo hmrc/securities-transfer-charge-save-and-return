@@ -68,7 +68,7 @@ class UserAnswersRepositoryImpl @Inject()(mongoComponent: MongoComponent,
     domainFormat = UserAnswersDocument.format,
     indexes = Seq(
       IndexModel(
-        Indexes.ascending("createdAt"),
+        Indexes.ascending("userAnswers.createdAt"),
         IndexOptions()
           .name("createdAtIdx")
           .expireAfter(appConfig.timeToLive, TimeUnit.DAYS)
