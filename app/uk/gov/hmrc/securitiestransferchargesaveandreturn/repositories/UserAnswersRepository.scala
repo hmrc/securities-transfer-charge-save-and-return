@@ -72,6 +72,20 @@ class UserAnswersRepositoryImpl @Inject()(mongoComponent: MongoComponent,
         IndexOptions()
           .name("createdAtIdx")
           .expireAfter(appConfig.timeToLive, TimeUnit.DAYS)
+      ),
+      IndexModel(
+        Indexes.ascending("submissionId"),
+        IndexOptions()
+          .name("submissionIdIdx")
+          .unique(true)
+      ),
+      IndexModel(
+        Indexes.ascending("userId"),
+        IndexOptions().name("userIdIdx")
+      ),
+      IndexModel(
+        Indexes.ascending("groupIdentifier"),
+        IndexOptions().name("groupIdentifierIdx")
       )
     )
   ) with UserAnswersRepository {
