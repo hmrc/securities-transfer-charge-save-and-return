@@ -26,6 +26,7 @@ case class UserAnswers(userId: UserId,
                        groupIdentifier: GroupIdentifier,
                        submissionId: SubmissionId,
                        journeyType: JourneyType,
+                       fileUploadReference: Option[String] = None,
                        nextPage: Option[Call] = None,
                        data: JsObject = Json.obj(),
                        createdAt: Instant = Instant.now,
@@ -66,6 +67,7 @@ object UserAnswers {
         (__ \ "groupIdentifier").read[GroupIdentifier] and
         (__ \ "submissionId").read[SubmissionId] and
         (__ \ "journeyType").read[JourneyType] and
+        (__ \ "fileUploadReference").readNullable[String] and
         (__ \ "nextPage").readNullable[Call] and
         (__ \ "data").read[JsObject] and
         (__ \ "createdAt").read(MongoJavatimeFormats.instantFormat) and
@@ -82,11 +84,12 @@ object UserAnswers {
         (__ \ "groupIdentifier").write[GroupIdentifier] and
         (__ \ "submissionId").write[SubmissionId] and
         (__ \ "journeyType").write[JourneyType] and
+        (__ \ "fileUploadReference").writeNullable[String] and
         (__ \ "nextPage").writeNullable[Call] and
         (__ \ "data").write[JsObject] and
         (__ \ "createdAt").write(MongoJavatimeFormats.instantFormat) and
         (__ \ "lastUpdated").write(MongoJavatimeFormats.instantFormat)
-      )(ua => (ua.userId, ua.groupIdentifier, ua.submissionId, ua.journeyType,ua.nextPage, ua.data, ua.createdAt, ua.lastUpdated))
+      )(ua => (ua.userId, ua.groupIdentifier, ua.submissionId, ua.journeyType, ua.fileUploadReference, ua.nextPage, ua.data, ua.createdAt, ua.lastUpdated))
   }
 
   implicit val format: OFormat[UserAnswers] = OFormat(reads, writes)
